@@ -1,56 +1,22 @@
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~>4.0"
-    }
-  }
-  backend "s3" {
-    bucket = "terraform1-assignment"
-    key    = "aws/terraform1-assignment/terraform.tfstate"
-    region = "us-east-1"
-  }
-}
-
-
-provider "aws" {
+module "provider" {
+  source = "./modules/provider"
+  version = "~>4.0"
+  provider-source = "hashicorp/aws"
+  bucket-name = "terraform1-assignment"
+  bucket-key = "aws/terraform1-assignment/terraform.tfstate"
   region = "us-east-1"
 }
 
 # Data source declaration for all necessary fetch
-data "aws_vpc" "default_vpc" {
-  default = true
+module "aws_vpc" {
+  source = "./modules/vpc"
 }
 
-data "aws_subnets" "subnets" {
-  filter {
-    name   = "vpc-id"
-    values = [data.aws_vpc.default_vpc.id]
-  }
+module "aws_ami" {
+  source = "./modules/ami"
 }
 
-data "aws_ami" "ubuntu" {
-  most_recent = true
-
-  filter {
-    name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"]
-  }
-
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
-
-  filter {
-    name   = "root-device-type"
-    values = ["ebs"]
-  }
-
-  owners = ["099720109477"] # Canonical
-}
-
-data "template_file" "nginx_data_script" {
+/* data "template_file" "nginx_data_script" {
   template = file("./user-data.tpl")
   vars = {
     server = "nginx"
@@ -62,56 +28,14 @@ data "template_file" "apache_data_script" {
   vars = {
     server = "apache2"
   }
-}
+} */
 
 
 # General Security group declaration
-resource "aws_security_group" "terraform-sg" {
-  egress = [{
-    cidr_blocks      = ["0.0.0.0/0"]
-    description      = ""
-    from_port        = 0
-    ipv6_cidr_blocks = []
-    prefix_list_ids  = []
-    protocol         = "-1"
-    security_groups  = []
-    self             = false
-    to_port          = 0
-  }]
-
-  ingress = [{
-    cidr_blocks      = ["0.0.0.0/0"]
-    description      = "allow ssh"
-    from_port        = 22
-    ipv6_cidr_blocks = []
-    prefix_list_ids  = []
-    protocol         = "tcp"
-    security_groups  = []
-    self             = false
-    to_port          = 22
-    },
-    {
-      cidr_blocks      = ["0.0.0.0/0"]
-      description      = "allow http"
-      from_port        = 80
-      ipv6_cidr_blocks = []
-      prefix_list_ids  = []
-      protocol         = "tcp"
-      security_groups  = []
-      self             = false
-      to_port          = 80
-    },
-    {
-      cidr_blocks      = ["0.0.0.0/0"]
-      description      = "allow 5000"
-      from_port        = 5000
-      ipv6_cidr_blocks = []
-      prefix_list_ids  = []
-      protocol         = "tcp"
-      security_groups  = []
-      self             = false
-      to_port          = 5000
-  }]
+module "aws_security_group" {
+  source = "./modules/security-group"
+  http-port = 80
+  ssh-port = 22
 }
 
 # Provision the ec2 instance for APACHE
