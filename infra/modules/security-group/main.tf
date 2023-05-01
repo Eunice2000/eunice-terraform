@@ -15,24 +15,24 @@ resource "aws_security_group" "terraform-sg" {
   ingress = [{
     cidr_blocks      = ["0.0.0.0/0"]
     description      = "allow ssh"
-    from_port        = 22
+    from_port        = var.ssh-port
     ipv6_cidr_blocks = []
     prefix_list_ids  = []
     protocol         = "tcp"
     security_groups  = []
     self             = false
-    to_port          = 22
+    to_port          = var.ssh-port
     },
     {
       cidr_blocks      = ["0.0.0.0/0"]
       description      = "allow http"
-      from_port        = 80
+      from_port        = var.http-port
       ipv6_cidr_blocks = []
       prefix_list_ids  = []
       protocol         = "tcp"
       security_groups  = []
       self             = false
-      to_port          = 80
+      to_port          = var.http-port
     },
     {
       cidr_blocks      = ["0.0.0.0/0"]
@@ -45,4 +45,8 @@ resource "aws_security_group" "terraform-sg" {
       self             = false
       to_port          = 5000
   }]
+}
+
+output "security_groups_id" {
+  value = aws_security_group.terraform-sg.id
 }
