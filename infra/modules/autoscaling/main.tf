@@ -29,5 +29,3 @@ resource "aws_autoscaling_group" "terraform-asg" {
     version = "$Latest"
   }
 }
-
-
